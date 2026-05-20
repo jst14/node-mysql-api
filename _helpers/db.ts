@@ -7,10 +7,8 @@ import refreshTokenModel from '../accounts/refresh-token.model';
 const db: { [key: string]: any } = {};
 export default db;
 
-// Assign the promise so other modules can await it
 export const dbReady = initialize();
 
-// Get config from environment variables or config.json
 function getConfig() {
   const dbConfig = {
     host: process.env.DB_HOST || config.database.host,
@@ -18,26 +16,37 @@ function getConfig() {
     user: process.env.DB_USER || config.database.user,
     password: process.env.DB_PASSWORD || config.database.password,
     database: process.env.DB_NAME || config.database.database,
+    ssl: process.env.DB_SSL === 'true',
   };
-  
+
   console.log('Database config (host/port/database):', dbConfig.host, dbConfig.port, dbConfig.database);
+  console.log('SSL enabled:', dbConfig.ssl);
   return dbConfig;
 }
 
 async function initialize() {
   const dbConfig = getConfig();
-  const { host, port, user, password, database } = dbConfig;
+  const { host, port, user, password, database, ssl } = dbConfig;
+
+  // SSL options for Aiven (rejectUnauthorized: false allows self-signed certs)
+  const sslOptions = ssl ? { rejectUnauthorized: false } : undefined;
 
   try {
     console.log('Initializing database connection...');
-    
+
     // Create DB if it doesn't exist
-    const connection = await mysql.createConnection({ host, port, user, password });
+    const connection = await mysql.createConnection({
+      host,
+      port,
+      user,
+      password,
+      ssl: sslOptions,
+    });
     console.log('Connected to MySQL server');
-    
+
     await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
     console.log('Database ensured:', database);
-    
+
     await connection.end();
 
     // Connect with Sequelize
@@ -52,6 +61,13 @@ async function initialize() {
         acquire: 30000,
         idle: 10000,
       },
+      dialectOptions: ssl
+        ? {
+            ssl: {
+              rejectUnauthorized: false,
+            },
+          }
+        : {},
     });
 
     // Init models
@@ -68,7 +84,7 @@ async function initialize() {
     console.log('Syncing database models...');
     await sequelize.sync({ alter: true });
     console.log('Database initialization complete');
-    
+
     return true;
   } catch (error: any) {
     console.error('Database initialization failed:', error.message);
