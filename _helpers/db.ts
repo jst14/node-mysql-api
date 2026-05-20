@@ -10,31 +10,28 @@ export default db;
 export const dbReady = initialize();
 
 function getConfig() {
+  const ssl = process.env.DB_SSL === 'true';
   const dbConfig = {
-    host: process.env.DB_HOST || config.database.host,
-    port: parseInt(process.env.DB_PORT || String(config.database.port)),
-    user: process.env.DB_USER || config.database.user,
+    host:     process.env.DB_HOST     || config.database.host,
+    port:     parseInt(process.env.DB_PORT || String(config.database.port)),
+    user:     process.env.DB_USER     || config.database.user,
     password: process.env.DB_PASSWORD || config.database.password,
-    database: process.env.DB_NAME || config.database.database,
-    ssl: process.env.DB_SSL === 'true',
+    database: process.env.DB_NAME     || config.database.database,
+    ssl,
   };
 
-  console.log('Database config (host/port/database):', dbConfig.host, dbConfig.port, dbConfig.database);
-  console.log('SSL enabled:', dbConfig.ssl);
+  console.log('DB config → host:', dbConfig.host, '| port:', dbConfig.port, '| db:', dbConfig.database, '| ssl:', ssl);
   return dbConfig;
 }
 
 async function initialize() {
-  const dbConfig = getConfig();
-  const { host, port, user, password, database, ssl } = dbConfig;
-
-  // SSL options for Aiven (rejectUnauthorized: false allows self-signed certs)
+  const { host, port, user, password, database, ssl } = getConfig();
   const sslOptions = ssl ? { rejectUnauthorized: false } : undefined;
 
   try {
     console.log('Initializing database connection...');
 
-    // Create DB if it doesn't exist
+    // Step 1: Connect to MySQL server and ensure DB exists
     const connection = await mysql.createConnection({
       host,
       port,
@@ -46,10 +43,9 @@ async function initialize() {
 
     await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
     console.log('Database ensured:', database);
-
     await connection.end();
 
-    // Connect with Sequelize
+    // Step 2: Connect Sequelize to the database
     const sequelize = new Sequelize(database, user, password, {
       dialect: 'mysql',
       host,
@@ -61,26 +57,22 @@ async function initialize() {
         acquire: 30000,
         idle: 10000,
       },
-      dialectOptions: ssl
-        ? {
-            ssl: {
-              rejectUnauthorized: false,
-            },
-          }
+      dialectOptions: sslOptions
+        ? { ssl: sslOptions }
         : {},
     });
 
-    // Init models
+    // Step 3: Init models
     db.Account = accountModel(sequelize);
     db.RefreshToken = refreshTokenModel(sequelize);
     db.sequelize = sequelize;
     db.Sequelize = Sequelize;
 
-    // Define relationships
+    // Step 4: Relationships
     db.Account.hasMany(db.RefreshToken, { foreignKey: 'accountId', onDelete: 'CASCADE' });
     db.RefreshToken.belongsTo(db.Account, { foreignKey: 'accountId' });
 
-    // Sync tables
+    // Step 5: Sync
     console.log('Syncing database models...');
     await sequelize.sync({ alter: true });
     console.log('Database initialization complete');
