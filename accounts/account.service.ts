@@ -1,4 +1,3 @@
-import config from '../config.json';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -7,8 +6,12 @@ import sendEmail from '../_helpers/send-email';
 import db from '../_helpers/db';
 import Role from '../_helpers/role';
 
-// Get JWT secret from environment or config
-const getJwtSecret = () => process.env.JWT_SECRET || config.secret;
+// Get JWT secret from environment variable
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET environment variable is not set');
+  return secret;
+};
 
 export default {
   authenticate,
@@ -195,32 +198,24 @@ async function sendVerificationEmail(account: any, origin: any) {
   if (origin) {
     const verifyUrl = `${origin}/account/verify-email?token=${account.verificationToken}`;
     message = `
-Please click the link below to verify your email:
-
-
-               
-${verifyUrl}
-
-`;
+      <p>Please click the link below to verify your email:</p>
+      <p><a href="${verifyUrl}">${verifyUrl}</a></p>
+    `;
   } else {
     message = `
-Please use the token below to verify your email with the
-               /account/verify-email api route:
-
-
-               
-${account.verificationToken}
-
-`;
+      <p>Please use the token below to verify your email with the
+      <strong>/account/verify-email</strong> api route:</p>
+      <p><code>${account.verificationToken}</code></p>
+    `;
   }
   await sendEmail({
     to: account.email,
     subject: 'Sign-up Verification API - Verify Email',
     html: `
-Verify Email
-Thanks for registering!
-
-${message}`
+      <h4>Verify Email</h4>
+      <p>Thanks for registering!</p>
+      ${message}
+    `
   });
 }
 
@@ -228,27 +223,23 @@ async function sendAlreadyRegisteredEmail(email: any, origin: any) {
   let message;
   if (origin) {
     message = `
-If you don't know your password visit the
-               forgot password page.
-
-`;
+      <p>If you don't know your password visit the
+      <a href="${origin}/account/forgot-password">forgot password</a> page.</p>
+    `;
   } else {
     message = `
-If you don't know your password you can reset it via the
-               /account/forgot-password api route.
-
-`;
+      <p>If you don't know your password you can reset it via the
+      <strong>/account/forgot-password</strong> api route.</p>
+    `;
   }
   await sendEmail({
     to: email,
     subject: 'Sign-up Verification API - Email Already Registered',
     html: `
-Email Already Registered
-
-           
-Your email ${email} is already registered.
-
-${message}`
+      <h4>Email Already Registered</h4>
+      <p>Your email <strong>${email}</strong> is already registered.</p>
+      ${message}
+    `
   });
 }
 
@@ -257,29 +248,22 @@ async function sendPasswordResetEmail(account: any, origin: any) {
   if (origin) {
     const resetUrl = `${origin}/account/reset-password?token=${account.resetToken}`;
     message = `
-Please click the link below to reset your password (valid for 1 day):
-
-
-               
-${resetUrl}
-
-`;
+      <p>Please click the link below to reset your password (valid for 1 day):</p>
+      <p><a href="${resetUrl}">${resetUrl}</a></p>
+    `;
   } else {
     message = `
-Please use the token below to reset your password with the
-               /account/reset-password api route:
-
-
-               
-${account.resetToken}
-
-`;
+      <p>Please use the token below to reset your password with the
+      <strong>/account/reset-password</strong> api route:</p>
+      <p><code>${account.resetToken}</code></p>
+    `;
   }
   await sendEmail({
     to: account.email,
     subject: 'Sign-up Verification API - Reset Password',
     html: `
-Reset Password Email
-${message}`
+      <h4>Reset Password Email</h4>
+      ${message}
+    `
   });
 }
