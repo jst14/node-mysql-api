@@ -7,6 +7,9 @@ import sendEmail from '../_helpers/send-email';
 import db from '../_helpers/db';
 import Role from '../_helpers/role';
 
+// Get JWT secret from environment or config
+const getJwtSecret = () => process.env.JWT_SECRET || config.secret;
+
 export default {
   authenticate,
   refreshToken,
@@ -166,7 +169,7 @@ async function hash(password: any) {
 }
 
 function generateJwtToken(account: any) {
-  return jwt.sign({ sub: account.id, id: account.id }, config.secret, { expiresIn: '15m' });
+  return jwt.sign({ sub: account.id, id: account.id }, getJwtSecret(), { expiresIn: '15m' });
 }
 
 function generateRefreshToken(account: any, ipAddress: any) {
