@@ -17,7 +17,6 @@ function getConfig() {
     database: process.env.DB_NAME     || 'node_mysql_api',
     ssl,
   };
-
   console.log('DB config → host:', dbConfig.host, '| port:', dbConfig.port, '| db:', dbConfig.database, '| ssl:', ssl);
   return dbConfig;
 }
@@ -37,11 +36,15 @@ async function initialize() {
       pool: {
         max: 2,
         min: 0,
-        acquire: 20000,
-        idle: 5000,
+        acquire: 10000,
+        idle: 3000,
       },
       dialectOptions: ssl
-        ? { ssl: { rejectUnauthorized: false } }
+        ? {
+            ssl: {
+              rejectUnauthorized: false,
+            },
+          }
         : {},
     });
 
@@ -53,12 +56,17 @@ async function initialize() {
     db.Account.hasMany(db.RefreshToken, { foreignKey: 'accountId', onDelete: 'CASCADE' });
     db.RefreshToken.belongsTo(db.Account, { foreignKey: 'accountId' });
 
-    if (process.env.NODE_ENV === 'production') {
-      await sequelize.authenticate();
-      console.log('DB authenticated successfully');
+    // In production: only authenticate (verify connection), never alter schema on cold start
+    await sequelize.authenticate();
+    console.log('DB authenticated successfully');
+
+    if (process.env.NODE_ENV !== 'production') {
       await sequelize.sync({ alter: true });
+      console.log('DB synced (dev)');
     } else {
-      await sequelize.sync({ alter: true });
+      // In production, just sync without altering — tables must already exist
+      await sequelize.sync({ force: false });
+      console.log('DB synced (production)');
     }
 
     console.log('Database initialization complete');
