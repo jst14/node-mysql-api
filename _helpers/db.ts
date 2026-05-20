@@ -1,5 +1,4 @@
 import config from '../config.json';
-import mysql from 'mysql2/promise';
 import { Sequelize } from 'sequelize';
 import accountModel from '../accounts/account.model';
 import refreshTokenModel from '../accounts/refresh-token.model';
@@ -10,7 +9,7 @@ export default db;
 export const dbReady = initialize();
 
 function getConfig() {
-  const ssl = process.env.DB_SSL === 'true';
+  const ssl = process.env.DB_SSL !== 'false'; // default TRUE for Aiven
   const dbConfig = {
     host:     process.env.DB_HOST     || config.database.host,
     port:     parseInt(process.env.DB_PORT || String(config.database.port)),
@@ -26,57 +25,51 @@ function getConfig() {
 
 async function initialize() {
   const { host, port, user, password, database, ssl } = getConfig();
-  const sslOptions = ssl ? { rejectUnauthorized: false } : undefined;
 
   try {
     console.log('Initializing database connection...');
 
-    // Step 1: Connect to MySQL server and ensure DB exists
-    const connection = await mysql.createConnection({
-      host,
-      port,
-      user,
-      password,
-      ssl: sslOptions,
-    });
-    console.log('Connected to MySQL server');
+    // Skip CREATE DATABASE — Aiven pre-creates 'defaultdb' and
+    // avnadmin does not have CREATE DATABASE privileges.
+    // Sequelize connects directly to the existing database.
 
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
-    console.log('Database ensured:', database);
-    await connection.end();
-
-    // Step 2: Connect Sequelize to the database
     const sequelize = new Sequelize(database, user, password, {
       dialect: 'mysql',
+      dialectModule: require('mysql2'), // force bundled mysql2 on Vercel
       host,
       port,
-      logging: console.log,
+      logging: false, // reduce log noise in production
       pool: {
-        max: 5,
+        max: 2,        // keep low — Vercel is serverless, not persistent
         min: 0,
-        acquire: 30000,
-        idle: 10000,
+        acquire: 20000,
+        idle: 5000,
       },
-      dialectOptions: sslOptions
-        ? { ssl: sslOptions }
+      dialectOptions: ssl
+        ? { ssl: { rejectUnauthorized: false } } // Aiven uses self-signed CA
         : {},
     });
 
-    // Step 3: Init models
-    db.Account = accountModel(sequelize);
+    // Init models
+    db.Account      = accountModel(sequelize);
     db.RefreshToken = refreshTokenModel(sequelize);
-    db.sequelize = sequelize;
-    db.Sequelize = Sequelize;
+    db.sequelize    = sequelize;
+    db.Sequelize    = Sequelize;
 
-    // Step 4: Relationships
+    // Relationships
     db.Account.hasMany(db.RefreshToken, { foreignKey: 'accountId', onDelete: 'CASCADE' });
     db.RefreshToken.belongsTo(db.Account, { foreignKey: 'accountId' });
 
-    // Step 5: Sync
-    console.log('Syncing database models...');
-    await sequelize.sync({ alter: true });
-    console.log('Database initialization complete');
+    // Sync — use alter:true only in dev; in prod just authenticate
+    if (process.env.NODE_ENV === 'production') {
+      await sequelize.authenticate();
+      console.log('DB authenticated successfully');
+      await sequelize.sync({ alter: true }); // still sync so tables are created
+    } else {
+      await sequelize.sync({ alter: true });
+    }
 
+    console.log('Database initialization complete');
     return true;
   } catch (error: any) {
     console.error('Database initialization failed:', error.message);
