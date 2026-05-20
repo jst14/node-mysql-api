@@ -6,8 +6,8 @@ info:
 
 
 servers:
- - url: /
-   description: Current server
+ - url: https://jslimosnero-ipt-2026-backend.vercel.app/
+   description: Production server (Vercel)
  - url: http://localhost:4000
    description: Local development server
 
