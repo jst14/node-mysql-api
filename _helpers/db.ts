@@ -5,7 +5,8 @@ import refreshTokenModel from '../accounts/refresh-token.model';
 const db: { [key: string]: any } = {};
 export default db;
 
-export const dbReady = initialize();
+let initialized = false;
+let initPromise: Promise<boolean> | null = null;
 
 function getConfig() {
   const ssl = process.env.DB_SSL !== 'false';
@@ -20,6 +21,8 @@ function getConfig() {
 }
 
 async function initialize() {
+  if (initialized) return true;
+
   const { host, port, user, password, database, ssl } = getConfig();
 
   console.log('DB config → host:', host, '| port:', port, '| db:', database, '| ssl:', ssl);
@@ -31,15 +34,8 @@ async function initialize() {
     host,
     port,
     logging: false,
-    pool: {
-      max: 2,
-      min: 0,
-      acquire: 10000,
-      idle: 3000,
-    },
-    dialectOptions: ssl
-      ? { ssl: { rejectUnauthorized: false } }
-      : {},
+    pool: { max: 2, min: 0, acquire: 8000, idle: 3000 },
+    dialectOptions: ssl ? { ssl: { rejectUnauthorized: false } } : {},
   });
 
   db.Account      = accountModel(sequelize);
@@ -50,20 +46,29 @@ async function initialize() {
   db.Account.hasMany(db.RefreshToken, { foreignKey: 'accountId', onDelete: 'CASCADE' });
   db.RefreshToken.belongsTo(db.Account, { foreignKey: 'accountId' });
 
-  try {
-    await sequelize.authenticate();
-    console.log('DB authenticated successfully');
+  await sequelize.authenticate();
+  console.log('DB authenticated — initialization complete');
 
-    // Only run sync in development — tables already exist in production (Aiven)
-    if (process.env.NODE_ENV !== 'production') {
-      await sequelize.sync({ alter: true });
-      console.log('DB synced (dev)');
-    }
-
-    console.log('Database initialization complete');
-    return true;
-  } catch (error: any) {
-    console.error('Database initialization failed:', error.message);
-    throw error;
+  if (process.env.NODE_ENV !== 'production') {
+    await sequelize.sync({ alter: true });
+    console.log('DB synced (dev)');
   }
+
+  initialized = true;
+  return true;
 }
+
+// Call once — subsequent calls reuse the same promise
+export function getDbReady(): Promise<boolean> {
+  if (!initPromise) {
+    initPromise = initialize().catch((err) => {
+      // Reset so next request retries
+      initPromise = null;
+      throw err;
+    });
+  }
+  return initPromise;
+}
+
+// Keep named export for backward compat but make it lazy
+export const dbReady = getDbReady();
