@@ -7,13 +7,11 @@ const router = express.Router();
 const swaggerPath = path.join(process.cwd(), 'swagger.yaml');
 const swaggerDocument = YAML.load(swaggerPath);
 
-// Serve the swagger spec as JSON (Swagger UI will fetch this)
 router.get('/swagger.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerDocument);
 });
 
-// Serve Swagger UI via CDN — no static file dependency on Vercel
 router.get('/', (req, res) => {
   const specUrl = '/api-docs/swagger.json';
   res.setHeader('Content-Type', 'text/html');
@@ -24,6 +22,87 @@ router.get('/', (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>API Docs</title>
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  <style>
+    /* ── Base dark background ── */
+    body, .swagger-ui { background: #1a1a2e; color: #e0e0e0; }
+
+    /* ── Top bar ── */
+    .swagger-ui .topbar { background: #16213e; border-bottom: 1px solid #0f3460; }
+
+    /* ── Info section ── */
+    .swagger-ui .info .title,
+    .swagger-ui .info p,
+    .swagger-ui .info a { color: #e0e0e0; }
+
+    /* ── Scheme container (Servers + Authorize bar) ── */
+    .swagger-ui .scheme-container { background: #16213e; box-shadow: none; border-bottom: 1px solid #0f3460; }
+
+    /* ── Section headings ── */
+    .swagger-ui .opblock-tag { color: #a0c4ff; border-bottom: 1px solid #0f3460; }
+    .swagger-ui .opblock-tag:hover { background: #16213e; }
+
+    /* ── Operation blocks ── */
+    .swagger-ui .opblock { background: #16213e; border-color: #0f3460; border-radius: 6px; margin-bottom: 6px; }
+    .swagger-ui .opblock .opblock-summary { background: transparent; }
+    .swagger-ui .opblock .opblock-summary-description { color: #b0b0c0; }
+    .swagger-ui .opblock.opblock-post   { border-left: 4px solid #49cc90; background: #0d2b1d; }
+    .swagger-ui .opblock.opblock-get    { border-left: 4px solid #61affe; background: #0d1f3c; }
+    .swagger-ui .opblock.opblock-put    { border-left: 4px solid #fca130; background: #2b1d0d; }
+    .swagger-ui .opblock.opblock-delete { border-left: 4px solid #f93e3e; background: #2b0d0d; }
+
+    /* ── Expanded opblock body ── */
+    .swagger-ui .opblock-body,
+    .swagger-ui .opblock-section { background: #12122a; }
+    .swagger-ui .opblock-description-wrapper p,
+    .swagger-ui .opblock-external-docs-wrapper p,
+    .swagger-ui .opblock-section-header h4,
+    .swagger-ui table thead tr td,
+    .swagger-ui table thead tr th,
+    .swagger-ui .response-col_status,
+    .swagger-ui .response-col_description,
+    .swagger-ui .parameter__name,
+    .swagger-ui .parameter__type,
+    .swagger-ui label { color: #c0c0d8; }
+
+    /* ── Tables ── */
+    .swagger-ui table tbody tr:nth-child(odd)  { background: #16163a; }
+    .swagger-ui table tbody tr:nth-child(even) { background: #12122a; }
+    .swagger-ui table tbody tr td { border-color: #0f3460; color: #c0c0d8; }
+
+    /* ── Inputs & textareas ── */
+    .swagger-ui input[type=text],
+    .swagger-ui input[type=email],
+    .swagger-ui input[type=password],
+    .swagger-ui textarea,
+    .swagger-ui select {
+      background: #0d0d1f;
+      color: #e0e0e0;
+      border: 1px solid #0f3460;
+      border-radius: 4px;
+    }
+
+    /* ── Buttons ── */
+    .swagger-ui .btn { border-radius: 4px; }
+    .swagger-ui .btn.execute   { background: #0f3460; color: #fff; border-color: #0f3460; }
+    .swagger-ui .btn.authorize { background: #0f3460; color: #49cc90; border-color: #49cc90; }
+    .swagger-ui .btn.cancel    { background: #2b0d0d; border-color: #f93e3e; color: #f93e3e; }
+
+    /* ── Response body ── */
+    .swagger-ui .highlight-code pre,
+    .swagger-ui .microlight { background: #0d0d1f !important; color: #a0e0b0 !important; border-radius: 4px; }
+
+    /* ── Model / schema boxes ── */
+    .swagger-ui section.models { background: #16213e; border: 1px solid #0f3460; border-radius: 6px; }
+    .swagger-ui section.models h4 { color: #a0c4ff; }
+    .swagger-ui .model-box { background: #12122a; }
+    .swagger-ui .model { color: #c0c0d8; }
+
+    /* ── Markdown & misc text ── */
+    .swagger-ui .markdown p,
+    .swagger-ui .markdown li { color: #b0b0c0; }
+    .swagger-ui .servers > label { color: #c0c0d8; }
+    .swagger-ui .servers select { background: #0d0d1f; color: #e0e0e0; border-color: #0f3460; }
+  </style>
 </head>
 <body>
   <div id="swagger-ui"></div>
