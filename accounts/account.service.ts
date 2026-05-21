@@ -122,7 +122,7 @@ async function getById(id: any) {
   return basicDetails(account);
 }
 
-async function create(params: any) {
+async function create(params: any, origin: any) {
   if (await db.Account.findOne({ where: { email: params.email } })) {
     throw `Email '${params.email}' is already registered`;
   }
@@ -132,10 +132,10 @@ async function create(params: any) {
   if (isFirstAccount) {
     account.role = Role.Admin;
   }
-  account.verified = Date.now();
+  account.verificationToken = randomTokenString();
   account.passwordHash = await hash(params.password);
   await account.save();
-  return basicDetails(account);
+  await sendVerificationEmail(account, origin);
 }
 
 async function update(id: any, params: any) {

@@ -193,8 +193,8 @@ function createSchema(req: any, res: any, next: any) {
 }
 
 function create(req: any, res: any, next: any) {
-    accountService.create(req.body)
-        .then((account: any) => res.json(account))
+    accountService.create(req.body, req.get('origin'))
+        .then(() => res.json({ message: 'Account created successfully, please check your email for verification instructions' }))
         .catch(next);
 }
 
