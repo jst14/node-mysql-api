@@ -83,6 +83,38 @@ npm start
 
 The server will run on: http://localhost:4000
 
+---
+
+## Deployment
+
+### Live Demonstration
+
+The API is deployed and running on Vercel:
+
+- **Backend API**: https://jslimosnero-ipt-2026-backend.vercel.app/
+- **Frontend**: https://jslimosnero-ipt-2026-frontend.vercel.app/
+- **API Docs (Swagger)**: https://jslimosnero-ipt-2026-backend.vercel.app/api-docs
+
+### Vercel Environment Variables
+
+When deploying to Vercel, configure the following environment variables in your project settings:
+
+```
+DB_HOST=mysql-database-johnsimonlimosero.a.aivencloud.com
+DB_PORT=21448
+DB_USER=avnadmin
+DB_PASSWORD=<your_aiven_password>
+DB_NAME=defaultdb
+JWT_SECRET=<your_generated_jwt_secret>
+SMTP_HOST=smtp.ethereal.email
+SMTP_PORT=587
+SMTP_USER=<your_ethereal_email>
+SMTP_PASS=<your_ethereal_password>
+EMAIL_FROM=<your_email>
+```
+
+**Note:** The `config.json` file is used for local development. Environment variables take precedence on production deployments.
+
 # Roles
 - **Admin** — The admin position is automatically assigned to the first registered account.
 - **User** — The User role is applied to all future accounts.
