@@ -5,6 +5,19 @@ import validateRequest from '../_middleware/validate-request';
 import authorize from '../_middleware/authorize';
 import Role from '../_helpers/role';
 import accountService from './account.service';
+import db from '../_helpers/db';
+
+// Middleware: Allow account creation if no accounts exist (bootstrap), otherwise require admin
+async function authorizeCreate(req: any, res: any, next: any) {
+  const accountCount = await db.Account.count();
+  if (accountCount === 0) {
+    // Bootstrap mode: allow first account creation without auth
+    next();
+  } else {
+    // Normal mode: require admin auth
+    authorize(Role.Admin)(req, res, next);
+  }
+}
 
 // Routes
 router.post('/authenticate', authenticateSchema, authenticate);
@@ -17,7 +30,7 @@ router.post('/validate-reset-token', validateResetTokenSchema, validateResetToke
 router.post('/reset-password', resetPasswordSchema, resetPassword);
 router.get('/', authorize(Role.Admin), getAll);
 router.get('/:id', authorize(), getById);
-router.post('/', authorize(Role.Admin), createSchema, create);
+router.post('/', authorizeCreate, createSchema, create);
 router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
 
