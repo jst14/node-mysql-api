@@ -20,14 +20,34 @@ router.get('/', (req, res) => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API Docs</title>
+  <title>Node.js Sign-up and Verification API</title>
+  <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5/favicon-16x16.png" sizes="16x16" />
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   <style>
     /* ── Base dark background ── */
     body, .swagger-ui { background: #1a1a2e; color: #e0e0e0; }
 
     /* ── Top bar ── */
-    .swagger-ui .topbar { background: #16213e; border-bottom: 1px solid #0f3460; }
+    .swagger-ui .topbar { background: #16213e; border-bottom: 1px solid #0f3460; padding: 8px 0; }
+
+    /* ── Topbar logo & title ── */
+    .topbar-wrapper img {
+      content: url('https://unpkg.com/swagger-ui-dist@5/favicon-32x32.png');
+      height: 32px;
+      width: 32px;
+    }
+    .topbar-wrapper a span {
+      display: none;
+    }
+    .topbar-wrapper::after {
+      content: 'Node.js Sign-up and Verification API';
+      color: #49cc90;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
 
     /* ── Info section ── */
     .swagger-ui .info .title,
