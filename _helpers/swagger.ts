@@ -28,27 +28,34 @@ router.get('/', (req, res) => {
     /* ── Base dark background ── */
     body, .swagger-ui { background: #1a1a2e; color: #e0e0e0; }
 
-    /* ── Top bar ── */
-    .swagger-ui .topbar {
+    /* ── Custom topbar ── */
+    #custom-topbar {
+      display: flex;
+      align-items: center;
       background: #1b1b1b;
-      border-bottom: 1px solid #0f3460;
-      padding: 8px 0;
-      display: flex !important;
-      visibility: visible !important;
+      border-bottom: 2px solid #49cc90;
+      padding: 10px 20px;
+      gap: 12px;
+    }
+    #custom-topbar img {
+      height: 40px;
+      width: auto;
+    }
+    #custom-topbar .topbar-title {
+      color: #49cc90;
+      font-size: 1.1rem;
+      font-weight: 600;
+      font-family: sans-serif;
+    }
+    #custom-topbar .topbar-sub {
+      color: #888;
+      font-size: 0.7rem;
+      font-family: sans-serif;
+      margin-top: 2px;
     }
 
-    /* ── Show Swagger logo as-is (do NOT override content) ── */
-    .topbar-wrapper img {
-      max-width: 100px;
-      height: auto;
-      display: block !important;
-      visibility: visible !important;
-    }
-
-    /* ── Hide the default link text next to logo ── */
-    .topbar-wrapper a span {
-      display: none;
-    }
+    /* ── Hide Swagger's built-in topbar (we have our own) ── */
+    .swagger-ui .topbar { display: none !important; }
 
     /* ── Info section ── */
     .swagger-ui .info .title,
@@ -126,6 +133,16 @@ router.get('/', (req, res) => {
   </style>
 </head>
 <body>
+
+  <!-- Custom Topbar -->
+  <div id="custom-topbar">
+    <img src="https://unpkg.com/swagger-ui-dist@5/favicon-32x32.png" alt="Swagger" />
+    <div>
+      <div class="topbar-title">Node.js Sign-up and Verification API</div>
+      <div class="topbar-sub">Supported by SMARTBEAR</div>
+    </div>
+  </div>
+
   <div id="swagger-ui"></div>
   <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
   <script>
@@ -135,15 +152,6 @@ router.get('/', (req, res) => {
       presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
       layout: 'BaseLayout',
       deepLinking: true,
-      onComplete: function() {
-        const topbarWrapper = document.querySelector('.topbar-wrapper');
-        if (topbarWrapper) {
-          const title = document.createElement('span');
-          title.textContent = 'Node.js Sign-up and Verification API';
-          title.style.cssText = 'color:#49cc90;font-size:1.1rem;font-weight:600;margin-left:12px;vertical-align:middle;';
-          topbarWrapper.appendChild(title);
-        }
-      }
     });
   </script>
 </body>
