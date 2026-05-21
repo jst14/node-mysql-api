@@ -1,22 +1,23 @@
 import { expressjwt } from 'express-jwt';
 import db from '../_helpers/db';
 
-export default function authorize(roles: any = []) {
+function authorize(roles: any = []) {
   if (typeof roles === 'string') {
     roles = [roles];
   }
 
-  return [
-    // Read JWT_SECRET lazily inside the handler, not at module load time
-    (req: any, res: any, next: any) => {
-      const secret = process.env.JWT_SECRET;
-      if (!secret) {
-        return res.status(500).json({ message: 'Server misconfiguration: JWT_SECRET not set' });
-      }
-      return expressjwt({ secret, algorithms: ['HS256'] })(req, res, next);
-    },
+  // Return a single middleware instead of an array
+  return async (req: any, res: any, next: any) => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).json({ message: 'Server misconfiguration: JWT_SECRET not set' });
+    }
 
-    async (req: any, res: any, next: any) => {
+    // Step 1: Validate JWT
+    expressjwt({ secret, algorithms: ['HS256'] })(req, res, async (err: any) => {
+      if (err) return next(err);
+
+      // Step 2: Check role + attach account info
       try {
         const account = await db.Account.findByPk(req.auth.id);
 
@@ -31,6 +32,10 @@ export default function authorize(roles: any = []) {
       } catch (err: any) {
         next(err);
       }
-    }
-  ];
+    });
+  };
 }
+
+// Use module.exports to avoid TypeScript default export issues on Vercel
+module.exports = authorize;
+module.exports.default = authorize;
