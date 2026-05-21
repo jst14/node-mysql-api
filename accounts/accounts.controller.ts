@@ -97,7 +97,7 @@ function updateSchema(req: any, res: any, next: any) {
     password:        Joi.string().min(6).empty(''),
     confirmPassword: Joi.string().valid(Joi.ref('password')).empty('')
   };
-  if (req.auth.role === Role.Admin) { // ← fixed
+  if (req.auth.role === Role.Admin) {
     schemaRules.role = Joi.string().valid(Role.Admin, Role.User).empty('');
   }
   const schema = Joi.object(schemaRules).with('password', 'confirmPassword');
@@ -120,6 +120,12 @@ function authenticate(req: any, res: any, next: any) {
 function refreshToken(req: any, res: any, next: any) {
   const token = req.cookies.refreshToken;
   const ipAddress = req.ip;
+
+  // No cookie yet — return 401 gracefully instead of crashing
+  if (!token) {
+    return res.status(401).json({ message: 'No refresh token' });
+  }
+
   accountService.refreshToken({ token, ipAddress })
     .then(({ refreshToken, ...account }: any) => {
       setTokenCookie(res, refreshToken);
@@ -132,7 +138,7 @@ function revokeToken(req: any, res: any, next: any) {
   const token = req.body.token || req.cookies.refreshToken;
   const ipAddress = req.ip;
   if (!token) return res.status(400).json({ message: 'Token is required' });
-  if (!req.auth.ownsToken(token) && req.auth.role !== Role.Admin) { // ← fixed
+  if (!req.auth.ownsToken(token) && req.auth.role !== Role.Admin) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   accountService.revokeToken({ token, ipAddress })
@@ -177,7 +183,7 @@ function getAll(req: any, res: any, next: any) {
 }
 
 function getById(req: any, res: any, next: any) {
-  if (Number(req.params.id) !== req.auth.id && req.auth.role !== Role.Admin) { // ← fixed
+  if (Number(req.params.id) !== req.auth.id && req.auth.role !== Role.Admin) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   accountService.getById(req.params.id)
@@ -192,7 +198,7 @@ function create(req: any, res: any, next: any) {
 }
 
 function update(req: any, res: any, next: any) {
-  if (Number(req.params.id) !== req.auth.id && req.auth.role !== Role.Admin) { // ← fixed
+  if (Number(req.params.id) !== req.auth.id && req.auth.role !== Role.Admin) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   accountService.update(req.params.id, req.body)
@@ -201,7 +207,7 @@ function update(req: any, res: any, next: any) {
 }
 
 function _delete(req: any, res: any, next: any) {
-  if (Number(req.params.id) !== req.auth.id && req.auth.role !== Role.Admin) { // ← fixed
+  if (Number(req.params.id) !== req.auth.id && req.auth.role !== Role.Admin) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   accountService.delete(req.params.id)
@@ -212,7 +218,9 @@ function _delete(req: any, res: any, next: any) {
 function setTokenCookie(res: any, token: any) {
   const cookieOptions = {
     httpOnly: true,
-    expires: new Date(Date.now() + 7*24*60*60*1000)
+    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    sameSite: 'none' as const,  // required for cross-origin
+    secure: true,               // required when sameSite=none
   };
   res.cookie('refreshToken', token, cookieOptions);
 }
