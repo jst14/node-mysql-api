@@ -30,17 +30,22 @@ router.get('/', (req, res) => {
 
     /* ── Top bar ── */
     .swagger-ui .topbar {
-      background: #0f3460;
-      border-bottom: 2px solid #49cc90;
-      padding: 10px 0;
+      background: #1b1b1b;
+      border-bottom: 1px solid #0f3460;
+      padding: 8px 0;
+      display: flex !important;
+      visibility: visible !important;
     }
 
-    /* ── Topbar logo ── */
+    /* ── Show Swagger logo as-is (do NOT override content) ── */
     .topbar-wrapper img {
-      content: url('https://unpkg.com/swagger-ui-dist@5/favicon-32x32.png');
-      height: 32px;
-      width: 32px;
+      max-width: 100px;
+      height: auto;
+      display: block !important;
+      visibility: visible !important;
     }
+
+    /* ── Hide the default link text next to logo ── */
     .topbar-wrapper a span {
       display: none;
     }
@@ -50,7 +55,7 @@ router.get('/', (req, res) => {
     .swagger-ui .info p,
     .swagger-ui .info a { color: #e0e0e0; }
 
-    /* ── Scheme container (Servers + Authorize bar) ── */
+    /* ── Scheme container ── */
     .swagger-ui .scheme-container { background: #16213e; box-shadow: none; border-bottom: 1px solid #0f3460; }
 
     /* ── Section headings ── */
