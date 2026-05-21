@@ -29,9 +29,13 @@ router.get('/', (req, res) => {
     body, .swagger-ui { background: #1a1a2e; color: #e0e0e0; }
 
     /* ── Top bar ── */
-    .swagger-ui .topbar { background: #16213e; border-bottom: 1px solid #0f3460; padding: 8px 0; }
+    .swagger-ui .topbar {
+      background: #0f3460;
+      border-bottom: 2px solid #49cc90;
+      padding: 10px 0;
+    }
 
-    /* ── Topbar logo & title ── */
+    /* ── Topbar logo ── */
     .topbar-wrapper img {
       content: url('https://unpkg.com/swagger-ui-dist@5/favicon-32x32.png');
       height: 32px;
@@ -39,14 +43,6 @@ router.get('/', (req, res) => {
     }
     .topbar-wrapper a span {
       display: none;
-    }
-    .topbar-wrapper::after {
-      content: 'Node.js Sign-up and Verification API';
-      color: #49cc90;
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-left: 10px;
-      vertical-align: middle;
     }
 
     /* ── Info section ── */
@@ -134,6 +130,15 @@ router.get('/', (req, res) => {
       presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
       layout: 'BaseLayout',
       deepLinking: true,
+      onComplete: function() {
+        const topbarWrapper = document.querySelector('.topbar-wrapper');
+        if (topbarWrapper) {
+          const title = document.createElement('span');
+          title.textContent = 'Node.js Sign-up and Verification API';
+          title.style.cssText = 'color:#49cc90;font-size:1.1rem;font-weight:600;margin-left:12px;vertical-align:middle;';
+          topbarWrapper.appendChild(title);
+        }
+      }
     });
   </script>
 </body>
