@@ -14,13 +14,9 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(cors({ origin: (origin, callback) => callback(null, true), credentials: true }));
 
-// Root — no DB needed
+// Root — redirect to API docs
 app.get('/', (req: Request, res: Response) => {
-  res.status(200).json({
-    message: 'Node.js Sign-up and Verification API',
-    status: 'running',
-    docs: '/api-docs'
-  });
+  res.redirect('/api-docs');
 });
 
 // Health — no DB needed
