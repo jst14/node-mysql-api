@@ -122,20 +122,22 @@ async function getById(id: any) {
   return basicDetails(account);
 }
 
-async function create(params: any, origin: any) {
+async function create(params: any) {
   if (await db.Account.findOne({ where: { email: params.email } })) {
     throw `Email '${params.email}' is already registered`;
   }
+
   const account = new db.Account(params);
   const isFirstAccount = (await db.Account.count()) === 0;
-  // If this is the first account, ensure it's an Admin (bootstrap)
   if (isFirstAccount) {
     account.role = Role.Admin;
   }
-  account.verificationToken = randomTokenString();
+
+  // Admin-created accounts are auto-verified — no email needed
+  account.verified = new Date();
+  account.verificationToken = null;
   account.passwordHash = await hash(params.password);
   await account.save();
-  await sendVerificationEmail(account, origin);
 }
 
 async function update(id: any, params: any) {
