@@ -127,6 +127,11 @@ async function create(params: any) {
     throw `Email '${params.email}' is already registered`;
   }
   const account = new db.Account(params);
+  const isFirstAccount = (await db.Account.count()) === 0;
+  // If this is the first account, ensure it's an Admin (bootstrap)
+  if (isFirstAccount) {
+    account.role = Role.Admin;
+  }
   account.verified = Date.now();
   account.passwordHash = await hash(params.password);
   await account.save();

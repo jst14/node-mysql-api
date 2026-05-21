@@ -12,7 +12,8 @@ It uses Sequelize ORM to implement role-based access control (RBAC), email verif
 - Docs: Swagger UI (served from `swagger.yaml`)
 - Email: Nodemailer (Ethereal for development/testing)
 - Framework: Express
-- Runtime: Node.js + TypeScript
+- Hosting: Vercel
+- Runtime: Node.js + TypeScript 
 
 ---
 
@@ -100,8 +101,8 @@ The API is deployed and running on Vercel:
 When deploying to Vercel, configure the following environment variables in your project settings:
 
 ```
-DB_HOST=mysql-database-johnsimonlimosero.a.aivencloud.com
-DB_PORT=21448
+DB_HOST=mysql-database-jslimosnero.a.aivencloud.com
+DB_PORT=12395
 DB_USER=avnadmin
 DB_PASSWORD=<your_aiven_password>
 DB_NAME=defaultdb
